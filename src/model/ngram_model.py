@@ -117,9 +117,6 @@ def main() :
     # Test lookup
     print(ngram_model1.lookup("hi across the"))
 
-
-
-
 if __name__ == "__main__":
     main()
         
