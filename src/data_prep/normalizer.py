@@ -3,7 +3,7 @@ from pydoc import text
 import re
 from tracemalloc import start
 
-class normalizer:
+class Normalizer:
 
     """module's responsibility: loading, cleaning, tokenizing, and saving the corpus
     used in In Module 1 (Data Prep) to processes whole raw files, 
@@ -77,10 +77,10 @@ class normalizer:
         """Apply all normalization steps in order: 
         lowercase → remove punctuation → remove numbers → remove whitespace. 
         This is the single method that other modules call to normalize text consistently."""
-        text = normalizer.lowercase(text)
-        text = normalizer.remove_punctuation(text)
-        text = normalizer.remove_numbers(text)
-        text = normalizer.remove_whitespaces(text)
+        text = Normalizer.lowercase(text)
+        text = Normalizer.remove_punctuation(text)
+        text = Normalizer.remove_numbers(text)
+        text = Normalizer.remove_whitespaces(text)
         return text
         
     @staticmethod
@@ -115,13 +115,13 @@ class normalizer:
 def main() :
     from dotenv import load_dotenv
     load_dotenv(dotenv_path="../../config/.env")
-    normalizer1 = normalizer(folder_path=os.getenv("TRAIN_RAW_DIR"), output_file=os.getenv("TRAIN_TOKENS"))
+    normalizer1 = Normalizer(folder_path=os.getenv("TRAIN_RAW_DIR"), output_file=os.getenv("TRAIN_TOKENS"))
     
     # Training
     normalizer1.main()
 
     # Normalizer Test
-    print(normalizer.normalize("  Hello, World! This is a test. 123   "))
+    print(Normalizer.normalize("  Hello, World! This is a test. 123   "))
 
 
 

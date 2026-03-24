@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import argparse
 import os
-from src.data_prep.normalizer import normalizer
+from src.data_prep.normalizer import Normalizer
 from src.model.ngram_model import NGramModel 
 load_dotenv(dotenv_path="config/.env")
 
@@ -12,13 +12,13 @@ def main():
     args = parser.parse_args()
 
     if args.step == "dataprep":
-        normalizer1 = normalizer(folder_path=os.getenv("TRAIN_RAW_DIR"), output_file=os.getenv("TRAIN_TOKENS"))
+        normalizer1 = Normalizer(folder_path=os.getenv("TRAIN_RAW_DIR"), output_file=os.getenv("TRAIN_TOKENS"))
 
         # Training
         normalizer1.main()
 
         # Normalizer Test
-        print(normalizer.normalize("  Hello, World! This is a test. 123   "))
+        print(Normalizer.normalize("  Hello, World! This is a test. 123   "))
 
     if args.step == "model":
         ngram_model1 = NGramModel (
