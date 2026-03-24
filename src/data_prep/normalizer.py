@@ -33,6 +33,8 @@ class normalizer:
         
         start = "*** START OF THE PROJECT GUTENBERG"
         end = "*** END OF THE PROJECT GUTENBERG"
+        if start not in text or end not in text:
+            return text
         pattern = re.escape(start) + r"(.*?)" + re.escape(end)
         matches = re.findall(pattern, text, flags=re.DOTALL)
         return "\n".join(m.strip() for m in matches)
@@ -45,10 +47,12 @@ class normalizer:
     @staticmethod
     def remove_punctuation(text) :
         """Remove all punctuation as well as underscores
-         retaining fullstops and replacing all commas,semicolons, excalamations 
+         retaining fullstops and replacing all excalamations 
          and question marks with fullstops to identify sentences"""
-        text = re.sub(r"[^\w\s.;,?!']|_", '', text)
-        return re.sub(r'[;,?!]', '.', text)
+
+        text = re.sub(r"’", "'", text)
+        text = re.sub(r"[^\w\s'.?!:]|_", " ", text)
+        return re.sub(r'[?!:]', '.', text)
 
     @staticmethod
     def remove_numbers(text) :
@@ -112,7 +116,12 @@ def main() :
     from dotenv import load_dotenv
     load_dotenv(dotenv_path="../../config/.env")
     normalizer1 = normalizer(folder_path=os.getenv("TRAIN_RAW_DIR"), output_file=os.getenv("TRAIN_TOKENS"))
+    
+    # Training
     normalizer1.main()
+
+    # Normalizer Test
+    print(normalizer.normalize("  Hello, World! This is a test. 123   "))
 
 
 
