@@ -21,8 +21,8 @@ The system walks through the real workflow behind a lightweight NLP model:
    - Required Variables : 
     - TRAIN_TOKENS (path *string*)
     - EVAL_TOKENS (path *string*)
-    - MODEL (path *string*)
-    - VOCAB (path *string*)
+    - MODEL_PATH (path *string*)
+    - VOCAB_PATH (path *string*)
     - UNK_THRESHOLD (*integer*)
     - TOP_K (*integer*)
     - NGRAM_ORDER (*integer*)
