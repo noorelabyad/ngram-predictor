@@ -56,7 +56,7 @@ class NGramModel :
                     ngram_minus_next_word = " ".join(ngram[:-1])
                     ngram_word = " ".join(ngram)
                     
-                    probability= text.count(ngram_word)/text.count(ngram_minus_next_word) if n > 1 else text.count(ngram_word)/len(text.split())
+                    probability= text.count(ngram_word)/text.count(ngram_minus_next_word) if n > 1 else (text.split()).count(ngram_word)/len(text.split())
                     if len(ngram_word.split()) == n : # for e.g. not to add 2-grams as 3-grams because that is how the sentence ended
                         if n > 1 :
                             if ngram_minus_next_word not in prob_dict[f"{n}gram"] :
