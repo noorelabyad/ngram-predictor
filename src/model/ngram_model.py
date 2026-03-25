@@ -80,7 +80,7 @@ class NGramModel :
                 if context in self.model[f"{n}gram"] :
                     return self.model[f"{n}gram"][context]
             context = " ".join(context.split()[1:]) 
-        return {}
+        return self.model["1gram"]
     
     def save_model(self) :
         """Save all probability tables to model.json"""
