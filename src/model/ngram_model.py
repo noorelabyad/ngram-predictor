@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append(os.getcwd())
 import json
 
 class NGramModel :
@@ -96,13 +98,14 @@ class NGramModel :
         self.vocab = json.load(open(self.vocab_path, "r", encoding="utf-8"))
     
     def main(self) :
+        """Run the whole pipeline: build vocab and model, save them, and load them back into the instance."""
         self.save_vocab() # includes building vocab
         self.save_model() # includes building counts and probabilities
         self.load()
 
 def main() :
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path="../../config/.env")
+    load_dotenv(dotenv_path="config/.env")
     print(os.getenv("VOCAB_PATH"))
     ngram_model1 = NGramModel(
         token_file=os.getenv("TRAIN_TOKENS"),

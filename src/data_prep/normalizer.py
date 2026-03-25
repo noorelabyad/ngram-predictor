@@ -1,7 +1,7 @@
 import os
-from pydoc import text
+import sys
+sys.path.append(os.getcwd())
 import re
-from tracemalloc import start
 
 class Normalizer:
 
@@ -104,6 +104,7 @@ class Normalizer:
 
 
     def main(self) :
+        """Run the whole pipeline: load raw text, clean and tokenize it, and save the processed tokens to a file."""
         text = self.load()
         text = self.strip_gutenberg(text)
         text = self.normalize(text)
@@ -114,7 +115,7 @@ class Normalizer:
 
 def main() :
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path="../../config/.env")
+    load_dotenv(dotenv_path="config/.env")
     normalizer1 = Normalizer(folder_path=os.getenv("TRAIN_RAW_DIR"), output_file=os.getenv("TRAIN_TOKENS"))
     
     # Training
