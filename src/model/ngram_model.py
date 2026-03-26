@@ -7,6 +7,14 @@ class NGramModel :
 
     """module's responsibility: building, storing, 
     and exposing n-gram probability tables and backoff lookup across all orders from 1 up to NGRAM_ORDER"""
+    """Attributes:
+    token_file: path to the normalized token file generated in data prep step, used to build the model
+    model_path: path to save the model json file generated in this module
+    vocab_path: path to save the vocab json file generated in this module
+    unk_threshold: any word appearing fewer than this number of times in the token file is replaced with <UNK> in the vocab
+    ngram_order: the maximum order of n-grams to count and compute probabilities for
+    model: a nested dict of dicts to store the n-gram probabilities, structured as {ngram_order: {ngram_minus_next_word: {next_word: probability}}} for all n-grams at all orders.
+    vocab: a list of all unique words in the token file, with words appearing fewer than UNK_THRESHOLD times replaced with <UNK>"""
 
     def __init__(self,  token_file, model_path, vocab_path, unk_threshold, ngram_order, model=None, vocab=None) :    
         self.token_file = token_file
