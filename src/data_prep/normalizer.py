@@ -5,17 +5,24 @@ import re
 
 class Normalizer:
 
-    """module's responsibility: loading, cleaning, tokenizing, and saving the corpus
-    used in In Module 1 (Data Prep) to processes whole raw files, 
-    and In Module 3 (Inference), only normalize(text) is called on a single input string 
-    to prepare it for lookup
-    """
+    """module's responsibility: loading raw text files, cleaning and normalizing the text, and saving the processed tokens to a file for model training.
+    The normalization steps are:
+    1. Strip Gutenberg header and footer
+    2. Lowercase all text
+    3. Remove punctuation
+    4. Remove numbers
+    5. Remove extra whitespaces and blank lines
+    The same normalization steps are applied to user input in inference to ensure consistency between training and inference.
+    Class Attributes:
+    folder_path: path to the folder containing raw text files to be processed
+    output_file: path to the file where processed tokens will be saved"""
+    
     def __init__(self, folder_path = None, output_file = None) :
         self.folder_path = folder_path
         self.output_file = output_file
 
     def load (self) :
-        """Load all .txt files from a folder"""
+        """Load all .txt files from the folder_path attribute of the instance and concatenate them into a single string and return it."""
         text = ""
         for filename in sorted(os.listdir(self.folder_path)):
             if filename.endswith(".txt"):
@@ -26,29 +33,34 @@ class Normalizer:
 
     @staticmethod
     def strip_gutenberg(text) :
-        """Remove Gutenberg header and footer
-        Extract only text in between the lines:
-         *** START OF THE PROJECT GUTENBERG
-         *** END OF THE PROJECT GUTENBERG, removing intro and references sections"""
+        """Extract only the lines in between the Gutenberg header and footer from the input string (parameter 'text') 
+        that may contain several concatenated Gutenberg texts, and return the cleaned string."""
         
         start = "*** START OF THE PROJECT GUTENBERG"
         end = "*** END OF THE PROJECT GUTENBERG"
         if start not in text or end not in text:
             return text
-        pattern = re.escape(start) + r"(.*?)" + re.escape(end)
+        
+        pattern = (
+            re.escape(start) + r"[^\n]*\n" # start + till end of line
+            r"(.*?)" +
+            re.escape(end)
+        )
+
         matches = re.findall(pattern, text, flags=re.DOTALL)
         return "\n".join(m.strip() for m in matches)
 
+
     @staticmethod
     def lowercase(text) :
-        """Lowercase all text"""
+        """Lowercase all text from an input string (parameter 'text') and return the cleaned string"""
         return text.lower()
     
     @staticmethod
     def remove_punctuation(text) :
-        """Remove all punctuation as well as underscores
+        """given a parameter input string (parameter 'text'); removes all punctuation as well as underscores
          retaining fullstops and replacing all excalamations 
-         and question marks with fullstops to identify sentences"""
+         and question marks with fullstops to identify sentences and return the cleaned text"""
 
         text = re.sub(r"’", "'", text)
         text = re.sub(r"[^\w\s'.?!:]|_", " ", text)
@@ -56,12 +68,12 @@ class Normalizer:
 
     @staticmethod
     def remove_numbers(text) :
-        """Remove all numbers"""
+        """Remove all numbers from an input string (parameter 'text') and return the cleaned string"""
         return re.sub(r"\d+", "", text)
     
     @staticmethod
     def remove_whitespaces(text) :
-        """Remove extra whitespaces and blank lines"""
+        """Remove extra whitespaces and blank lines from an input string (parameter 'text') and return the cleaned string"""
         lines = text.splitlines()
         cleaned_lines = []
 
@@ -74,9 +86,8 @@ class Normalizer:
 
     @staticmethod
     def normalize(text) :
-        """Apply all normalization steps in order: 
-        lowercase → remove punctuation → remove numbers → remove whitespace. 
-        This is the single method that other modules call to normalize text consistently."""
+        """ for a given input string (parameter 'text'), Apply all normalization steps in order: 
+        lowercase → remove punctuation → remove numbers → remove whitespace. Return the cleaned string."""
         text = Normalizer.lowercase(text)
         text = Normalizer.remove_punctuation(text)
         text = Normalizer.remove_numbers(text)
@@ -85,19 +96,21 @@ class Normalizer:
         
     @staticmethod
     def sentence_tokenize(text) :
-        """Split text into sentences using fullstops as delimiters"""
+        """for an input string (parameter 'text'), Split text into sentences using fullstops as delimiters, and
+        return a list of sentences."""
         sentences = text.split(".")
         return sentences
     
     @staticmethod
     def word_tokenize(sentence) :
-        """Split a single sentence into a list of tokens"""
+        """for an input string (parameter 'sentence'), Split a single sentence into a list of tokens and return the list."""
         tokens = sentence.split()
         return tokens
     
 
     def save(self, word_tokens) :
-        """Save the tokenized words to a file, one sentence per line, with tokens separated by spaces"""
+        """Save the tokenized words (input parameter 'word_tokens') to the output_file attribute of the instance, 
+        one sentence per line, with tokens separated by spaces"""
         with open(self.output_file, "w", encoding="utf-8") as f:
             for tokens in word_tokens:
                 f.write(" ".join(tokens) + "\n")
@@ -115,14 +128,14 @@ class Normalizer:
 
 def main() :
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path="config/.env")
+    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env.test"))
     normalizer1 = Normalizer(folder_path=os.getenv("TRAIN_RAW_DIR"), output_file=os.getenv("TRAIN_TOKENS"))
     
     # Training
     normalizer1.main()
 
     # Normalizer Test
-    print(Normalizer.normalize("  Hello, World! This is a test. 123   "))
+    print(Normalizer.normalize("  \"Hello, World\" This is a test, 123   "))
 
 
 
