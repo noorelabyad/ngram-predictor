@@ -73,8 +73,8 @@ class NGramModel :
 
     def lookup(self, context) :
         """Backoff lookup: try the highest-order context first, fall back to lower orders down to 1-gram. 
-        Return a dict of {word: probability} from the highest order that matches. Return empty dict if no match at any order. 
-        This is the single source of backoff logic in the project."""
+        Return a dict of {word: probability} from the highest order that matches. Return 1gram dict if no match at any order. 
+        Parameter is a string 'context' """
         while len(context.split()) > 0 :
             for n in range(self.ngram_order, 0, -1) :
                 if context in self.model[f"{n}gram"] :
@@ -105,9 +105,9 @@ class NGramModel :
 
 def main() :
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path="config/.env")
+    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env.test"))
     print(os.getenv("VOCAB_PATH"))
-    ngram_model1 = NGramModel(
+    ngram_model = NGramModel(
         token_file=os.getenv("TRAIN_TOKENS"),
         model_path=os.getenv("MODEL_PATH"),
         vocab_path=os.getenv("VOCAB_PATH"),
@@ -115,10 +115,11 @@ def main() :
         ngram_order=int(os.getenv("NGRAM_ORDER"))
     )
     # Trainig 
-    ngram_model1.main()
+    ngram_model.main()
 
     # Test lookup
-    print(ngram_model1.lookup("hi across the"))
+    print(ngram_model.lookup("the game is"))
+    print(ngram_model.lookup("zzz qqq"))
 
 if __name__ == "__main__":
     main()
