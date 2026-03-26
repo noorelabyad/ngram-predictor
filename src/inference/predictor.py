@@ -6,8 +6,8 @@ from src.data_prep.normalizer import Normalizer
 from src.model.ngram_model import NGramModel
 
 class Predictor:
-    """module's responsibility: loading the trained model and vocab, 
-    and providing a method to predict the next word given a sequence of words."""
+    """module's responsibility: taking user input, normalizing it using the same steps as in training, mapping any out-of-vocab word to <UNK>, 
+    and using the n-gram model to predict the top-k most likely next words."""
     
     def __init__(self, ngram_model, normalizer, top_k) :
         self.ngram_model = ngram_model
@@ -15,16 +15,18 @@ class Predictor:
         self.top_k = top_k
 
     def normalize(self, text) :
-        """Normalize the input text using the same normalization steps as in training"""
+        """Normalize the input text using the same normalization steps as in training
+        Parameter 'text' is the raw user input string. 
+        Returns the normalized context string that will be used for prediction"""
         text = Normalizer.normalize(text).split()
-        return " ".join(text[-(self.ngram_model.ngram_order - 1) :]) # take only the last n-1 words as context for prediction
+        return " ".join(text[-(self.ngram_model.ngram_order - 1) :])
 
     def map_oov(self,context) :
-        """Map any out-of-vocab word in the context to <UNK>"""
+        """Map any out-of-vocab word in the input string parameter 'context' to <UNK> and returns the mapped string."""
         return " ".join([word if word in self.ngram_model.vocab else "<UNK>" for word in context.split()])
     
     def predict_next(self, text) :
-        """Given an input text, predict the top-k most likely next words based on the n-gram model."""
+        """Given an input string parameter 'text', returns a list of the top-k most likely next words based on the n-gram model."""
         context = self.normalize(text)
         context = self.map_oov(context)
         next_words = self.ngram_model.lookup(context)
@@ -35,7 +37,7 @@ class Predictor:
 def main() :
 
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path="config/.env")
+    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env.test"))
 
     normalizer=Normalizer(
         folder_path=os.getenv("TRAIN_RAW_DIR"), 
@@ -59,8 +61,8 @@ def main() :
         )
 
     # Test prediction
-    print(predictor1.predict_next("hi across the"))
-    print(predictor1.predict_next("the"))
+    print(predictor1.predict_next("the game is"))
+    print(predictor1.predict_next("zzz qqq"))
 
 if __name__ == "__main__":
     main()
