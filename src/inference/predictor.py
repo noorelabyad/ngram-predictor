@@ -20,9 +20,11 @@ class Predictor:
         return " ".join(text[-(self.ngram_model.ngram_order - 1) :]) # take only the last n-1 words as context for prediction
 
     def map_oov(self,context) :
+        """Map any out-of-vocab word in the context to <UNK>"""
         return " ".join([word if word in self.ngram_model.vocab else "<UNK>" for word in context.split()])
     
     def predict_next(self, text) :
+        """Given an input text, predict the top-k most likely next words based on the n-gram model."""
         context = self.normalize(text)
         context = self.map_oov(context)
         next_words = self.ngram_model.lookup(context)
