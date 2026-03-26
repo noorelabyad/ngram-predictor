@@ -5,11 +5,9 @@ from src.data_prep.normalizer import Normalizer
 from src.model.ngram_model import NGramModel 
 from src.inference.predictor import Predictor
 
-load_dotenv(dotenv_path="config_test/.env")
-# load_dotenv(dotenv_path="config/.env")
 
 def dataprep() :
-
+    """Run the data preparation step: normalize raw text files and save the normalized tokens to a new file."""
     normalizer = Normalizer(
         folder_path=os.getenv("TRAIN_RAW_DIR"), 
         output_file=os.getenv("TRAIN_TOKENS")
@@ -18,7 +16,8 @@ def dataprep() :
     normalizer.main()
 
 def model() :
-
+    """Run the model training step: build the vocab, the n-gram counts and probabilities, save them to json files, 
+    and load them back into the instance."""
     ngram_model = NGramModel (
         token_file=os.getenv("TRAIN_TOKENS"),
         model_path=os.getenv("MODEL_PATH"),
@@ -30,6 +29,8 @@ def model() :
     ngram_model.main()
 
 def inference() :
+    """ Instantiate Normalizer and NGramModel, load the model, and instantiate Predictor.
+    Enter a loop that prompt the user for input, calls Predictor.predict_next(text, k), and prints the top-k predictions."""
     normalizer=Normalizer(
         folder_path=os.getenv("TRAIN_RAW_DIR"), 
         output_file=os.getenv("TRAIN_TOKENS")
@@ -58,11 +59,19 @@ def inference() :
         print(predictor.predict_next(user_input))
 
 def all() :
+    """Runs the whole pipeline: data preparation, model training, and inference."""
     dataprep()
     model()
     inference()
 
 def main():
+    """Run the desired steps of the pipeline based on command line arguments."""
+
+    # Uses the test data (runs on smaller raw data sample) instead of the main config and data
+    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env.test"))
+
+    # Uses the full data
+    # load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env"))
 
     parser = argparse.ArgumentParser(description="run upto which step")
     parser.add_argument("--step", default="inference", help="run upto which step")
