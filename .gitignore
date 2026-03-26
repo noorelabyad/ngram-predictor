@@ -1,6 +1,4 @@
 data/
-data_test/
 *.json
 __pycache__/
 *.pyc
-.env
