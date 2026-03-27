@@ -5,6 +5,12 @@ from src.data_prep.normalizer import Normalizer
 from src.model.ngram_model import NGramModel 
 from src.inference.predictor import Predictor
 
+""" There are two modes to run the code:
+loading the config.env.test and running on the smaller test data (faster for testing and debugging)
+or loading the config.env and running on the full data (takes more time but gives better results).
+You can switch between the two by commenting/uncommenting the corresponding load_dotenv lines in the
+main() function at the bottom of this file.
+"""
 
 def dataprep() :
     """Run the data preparation step: normalize raw text files and save the normalized tokens to a new file."""
@@ -68,10 +74,10 @@ def main():
     """Run the desired steps of the pipeline based on command line arguments."""
 
     # Uses the test data (runs on smaller raw data sample) instead of the main config and data
-    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env.test"))
+    # load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env.test"))
 
     # Uses the full data
-    # load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env"))
+    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env"))
 
     parser = argparse.ArgumentParser(description="run upto which step")
     parser.add_argument("--step", default="inference", help="run upto which step")

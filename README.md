@@ -35,8 +35,13 @@ This project provides a command-line interface to run different stages of the la
 - Inference (text prediction)
 - Or the entire pipeline end‑to‑end
 
-All configuration (paths, model parameters, and hyperparameters) is loaded from environment variables defined in `config/.env`.
+All configuration (paths, model parameters, and hyperparameters) is loaded from environment variables defined in `config\.env`.
 
+ #### There are two options for running the code :
+  1. Loading the `config\.env.test` and running on the smaller test data (faster for testing and debugging) or 
+  2. Loading the `config\.env` and running on the full data (takes much more time).
+- You can switch between the two by commenting/uncommenting the corresponding `load_dotenv()` lines in the
+main() function in `main.py`.
 ---
 
 ### Running the Program
