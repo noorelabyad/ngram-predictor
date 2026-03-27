@@ -11,6 +11,14 @@ or loading the config.env and running on the full data (takes more time but give
 You can switch between the two by commenting/uncommenting the corresponding load_dotenv lines in the
 main() function at the bottom of this file.
 """
+"""This module is the main entry point to run the whole pipeline. 
+It contains functions to run each step of the pipeline separately (data preparation, model training, and inference), 
+as well as a function to run the whole pipeline end-to-end. 
+The main() function uses command line arguments to determine which steps to run.
+
+THE DEFAULT STEP IS INFERENCE; SO THAT THE ALREADY TRAINED MODEL CAN BE LOADED AND TESTED WITHOUT HAVING 
+TO RE-RUN THE DATA PREP AND MODEL TRAINING STEPS WHICH TAKES A LONG TIME ON THE FULL DATA.
+"""
 
 def dataprep() :
     """Run the data preparation step: normalize raw text files and save the normalized tokens to a new file."""
