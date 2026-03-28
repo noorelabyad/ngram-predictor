@@ -44,7 +44,7 @@ All configuration (paths, model parameters, and hyperparameters) is loaded from 
 main() function in `main.py`.
 ---
 
-### Running the Program
+### Running the Program (CLI)
 
 All functionality is accessed through `main.py` using the `--step` argument.
 
@@ -106,7 +106,22 @@ This step:
 - Normalizes raw training data
 - Trains the n‑gram model
 - Starts the interactive inference loop
-  
+---
+### Running the Predictor UI
+
+The Streamlit UI provides an interactive browser interface for next‑word prediction.
+Streamlit must be launched using streamlit run, not python.
+```bash 
+streamlit run src/ui/app.py 
+```
+This will:
+- Load the trained n‑gram model
+- Open a local browser window
+- Allow users to type text and view top‑k next‑word predictions
+
+---
+
+
 ## Project Structure 
 
 ngram-predictor/
