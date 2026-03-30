@@ -107,6 +107,18 @@ This step:
 - Trains the n‑gram model
 - Starts the interactive inference loop
 ---
+**evaluate** : Runs perplexity evaluation on a held‑out evaluation corpus using a previously trained n‑gram language model.
+```bash
+python main.py --step evaluate
+```
+This step:
+- Normalizes the held‑out evaluation text and saves it to the EVAL_TOKENS file
+- Loads the trained n‑gram model and vocabulary
+- Computes cross‑entropy and perplexity using backoff n‑gram probabilities
+- Reports the number of evaluated words and skipped (zero‑probability) words
+- Prints a warning if more than 20% of words are skipped during evaluation
+This step is used to quantitatively assess how well the trained language model generalizes to unseen text.
+
 ### Running the Predictor UI
 
 The Streamlit UI provides an interactive browser interface for next‑word prediction.
@@ -142,6 +154,7 @@ ngram-predictor/
     - eval/
   - processed/
     - train_tokens.txt
+    - eval_tokens.txt
   - model/
     - model.json
     - vocab.json
