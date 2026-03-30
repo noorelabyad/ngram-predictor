@@ -84,10 +84,13 @@ class NGramModel :
         Return a dict of {word: probability} from the highest order that matches. Return 1gram dict if no match at any order. 
         Parameter is a string 'context' """
         while len(context.split()) > 0 :
-            for n in range(self.ngram_order, 0, -1) :
+            for n in range(self.ngram_order, 1, -1) :
                 if context in self.model[f"{n}gram"] :
+                    # print(f"DEBUG: Found context='{context}' in {n}gram")  # Debug log
                     return self.model[f"{n}gram"][context]
+                # print(f"DEBUG: Context='{context}' not found in {n}gram")  # Debug log
             context = " ".join(context.split()[1:]) 
+        # print("DEBUG: No context found, returning unigram probabilities")  # Debug log
         return self.model["1gram"]
     
     def save_model(self) :
