@@ -139,6 +139,7 @@ ngram-predictor/
 - data/
   - raw/
     - train/
+    - eval/
   - processed/
     - train_tokens.txt
   - model/
@@ -151,6 +152,8 @@ ngram-predictor/
     - ngram_model.py
   - inference/
     - predictor.py
+  - ui/
+    - app.py
 - main.py
 - .gitignore
 - requirements.txt

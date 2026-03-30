@@ -4,6 +4,7 @@ import os
 from src.data_prep.normalizer import Normalizer
 from src.model.ngram_model import NGramModel 
 from src.inference.predictor import Predictor
+from src.evaluation.evaluator import Evaluator
 
 """ There are two modes to run the code:
 loading the config.env.test and running on the smaller test data (faster for testing and debugging)
@@ -78,6 +79,32 @@ def all() :
     model()
     inference()
 
+def evaluate():
+    """Run perplexity evaluation on the held-out corpus."""
+    normalizer = Normalizer(
+        folder_path=os.getenv("EVAL_RAW_DIR"),
+        output_file=os.getenv("EVAL_TOKENS")
+    )
+    normalizer.main()
+
+    ngram_model = NGramModel(
+        token_file=os.getenv("TRAIN_TOKENS"),
+        model_path=os.getenv("MODEL_PATH"),
+        vocab_path=os.getenv("VOCAB_PATH"),
+        unk_threshold=int(os.getenv("UNK_THRESHOLD")),
+        ngram_order=int(os.getenv("NGRAM_ORDER"))
+    )
+    ngram_model.load()
+
+    evaluator = Evaluator(
+        model=ngram_model,
+        normalizer=normalizer,
+        eval_file=os.getenv("EVAL_TOKENS")
+    )
+
+ 
+    evaluator.run()
+
 def main():
     """Run the desired steps of the pipeline based on command line arguments."""
 
@@ -99,6 +126,8 @@ def main():
         inference()
     elif args.step == "all":
         all()
+    elif args.step == "evaluate":
+        evaluate()
     else:
         print("Invalid step. Choose from: dataprep, model, inference, all.")
 
