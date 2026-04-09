@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append(os.getcwd())
 import json
+from collections import Counter, defaultdict
 
 class NGramModel :
 
@@ -23,90 +24,147 @@ class NGramModel :
         self.unk_threshold = unk_threshold
         self.ngram_order = ngram_order
 
-    def build_vocab(self) :
-        """Build vocabulary; collect all unique words; replace any word appearing fewer than UNK_THRESHOLD times"""
-        with open(self.token_file, "r", encoding="utf-8") as f:
-            text = f.read()
-        tokens = text.split()
-        vocab = []
-        for token in tokens :
-                if tokens.count(token) < self.unk_threshold :
-                    vocab.append("<UNK>")
-                elif token not in vocab :
-                    vocab.append(token)
 
+
+    def build_vocab(self):
+        """
+        Build vocabulary by replacing words that appear fewer than
+        unk_threshold times with <UNK>.
+        """
+        with open(self.token_file, "r", encoding="utf-8") as f:
+            tokens = f.read().split()
+
+        token_counts = Counter(tokens)
+
+        vocab = {
+            token if count >= self.unk_threshold else "<UNK>"
+            for token, count in token_counts.items()
+        }
+
+        vocab.add("<UNK>")
+        self.vocab = vocab
         return vocab
 
-    def build_counts_and_probabilities(self) :
-        """Count all n-grams at orders 1 through NGRAM_ORDER and compute MLE probabilities. 
-        Probabilities depend on counts, so they are computed together to avoid hidden ordering bugs."""
+    def build_counts_and_probabilities(self):
+        """
+        Count n-grams (1..N) and compute MLE probabilities.
+        Model format:
+        {
+            n: { context_tuple: {next_word: probability} }
+        }
+        """
+        with open(self.token_file, "r", encoding="utf-8") as f:
+            sentences = [line.split() for line in f.read().splitlines()]
+
+        self.ngram_counts = {n: Counter() for n in range(1, self.ngram_order + 1)}
+        self.context_counts = {n: Counter() for n in range(2, self.ngram_order + 1)}
+
+        # ---- Counting pass ----
+        for sent in sentences:
+            for n in range(1, self.ngram_order + 1):
+                for i in range(len(sent) - n + 1):
+                    ngram = tuple(sent[i:i+n])
+                    self.ngram_counts[n][ngram] += 1
+
+                    if n > 1:
+                        context = ngram[:-1]
+                        self.context_counts[n][context] += 1
+
+        # ---- Probability computation ----
+        model = {}
+
+        # Unigrams
+        total_tokens = sum(self.ngram_counts[1].values())
+        model[1] = {
+            (): {word[0]: count / total_tokens
+                for word, count in self.ngram_counts[1].items()}
+        }
+
+        # Higher-order ngrams
+        for n in range(2, self.ngram_order + 1):
+            model[n] = defaultdict(dict)
+            for ngram, count in self.ngram_counts[n].items():
+                context = ngram[:-1]
+                word = ngram[-1]
+                model[n][context][word] = count / self.context_counts[n][context]
+
+        self.model = model
+        return model
+
+    def lookup(self, context):
+        """
+        Backoff lookup: try highest-order context first,
+        fall back to lower orders down to unigram.
+        """
+        words = tuple(context.split())
+
+        for n in range(min(len(words) + 1, self.ngram_order), 1, -1):
+            ctx = words[-(n - 1):]
+            if ctx in self.model[n]:
+                return self.model[n][ctx]
+
+        # fallback to unigram distribution
+        return self.model[1][()]
+
+    
+
+
+    def save_model(self):
+        """Save all probability tables to model.json"""
+        # build model if not already built
+        if not hasattr(self, "model"):
+            self.build_counts_and_probabilities()
 
         
-        # a window slides through scentences collecting ngrams and ngrams_plus_next_word
-        # for e.g. for 3-grams, the window size is 4, and the first 3 words are the context and the 4th word is the next word.
-        # probability of a word given a context = count(ngram) / count(ngram_minus_next_word) for n > 1, and count(ngram) / total_tokens for unigrams.
-        # the probabilities are stored in a nested dict of dicts: {ngram_order: {ngram_minus_next_word: {next_word: probability}}} 
-        # for all ngrams at all orders.
+        serial_model = {}
+        for n, table in self.model.items():
+            serial_model[str(n)] = {}
+            for context, dist in table.items():
+                context_key = " ".join(context)  
+                serial_model[str(n)][context_key] = dist
 
-        with open(self.token_file, "r", encoding="utf-8") as f:
-            text = f.read()
-        sentences = text.split("\n")
+        # ensure directory exists
+        model_dir = os.path.dirname(self.model_path)
+        if model_dir:
+            os.makedirs(model_dir, exist_ok=True)
 
-        prob_dict = {}
-        for n in range(1, self.ngram_order + 1) :
-            prob_dict[f"{n}gram"] = {}
-            for sentence in sentences  :
-                for start in range(len(sentence.split()) - n + 1) :
-                    ngram = []
-                    for k in range(start, start + n ) :
-                        if k < len(sentence.split()) :
-                            ngram.append(sentence.split() [k])
-                    ngram_minus_next_word = " ".join(ngram[:-1])
-                    ngram_word = " ".join(ngram)
-                    
-                    probability= text.count(ngram_word)/text.count(ngram_minus_next_word) if n > 1 else (text.split()).count(ngram_word)/len(text.split())
-                    if len(ngram_word.split()) == n : # for e.g. not to add 2-grams as 3-grams because that is how the sentence ended
-                        if n > 1 :
-                            if ngram_minus_next_word not in prob_dict[f"{n}gram"] :
-                                prob_dict[f"{n}gram"][ngram_minus_next_word] = {}
-                                prob_dict[f"{n}gram"][ngram_minus_next_word][ngram_word.split()[-1]] = probability
-                            else :
-                                prob_dict[f"{n}gram"][ngram_minus_next_word][ngram_word.split()[-1]] = probability
-                        else :
-                            if ngram_word not in prob_dict[f"{n}gram"] :
-                                prob_dict[f"{n}gram"][ngram_word] = probability
-
-
-        return prob_dict           
-
-    def lookup(self, context) :
-        """Backoff lookup: try the highest-order context first, fall back to lower orders down to 1-gram. 
-        Return a dict of {word: probability} from the highest order that matches. Return 1gram dict if no match at any order. 
-        Parameter is a string 'context' """
-        while len(context.split()) > 0 :
-            for n in range(self.ngram_order, 1, -1) :
-                if context in self.model[f"{n}gram"] :
-                    # print(f"DEBUG: Found context='{context}' in {n}gram")  # Debug log
-                    return self.model[f"{n}gram"][context]
-                # print(f"DEBUG: Context='{context}' not found in {n}gram")  # Debug log
-            context = " ".join(context.split()[1:]) 
-        # print("DEBUG: No context found, returning unigram probabilities")  # Debug log
-        return self.model["1gram"]
-    
-    def save_model(self) :
-        """Save all probability tables to model.json"""
         with open(self.model_path, "w", encoding="utf-8") as f:
-            json.dump(self.build_counts_and_probabilities(), f) 
+            json.dump(serial_model, f, ensure_ascii=False, indent=2)
 
-    def save_vocab(self) :
+
+    def save_vocab(self):
         """Save vocabulary to vocab.json"""
-        with open(self.vocab_path, "w") as f:
-            json.dump(self.build_vocab(), f)
+        if not hasattr(self, "vocab"):
+            self.vocab = self.build_vocab()
 
-    def load(self) :
-        """Load model.json and vocab.json into the instance. Called once in main() before passing the model to Predictor"""
-        self.model = json.load(open(self.model_path, "r", encoding="utf-8"))
-        self.vocab = json.load(open(self.vocab_path, "r", encoding="utf-8"))
+        # ensure directory exists
+        vocab_dir = os.path.dirname(self.vocab_path)
+        if vocab_dir:
+            os.makedirs(vocab_dir, exist_ok=True)
+
+        with open(self.vocab_path, "w", encoding="utf-8") as f:
+            json.dump(sorted(self.vocab), f, ensure_ascii=False, indent=2)
+
+
+
+    def load(self):
+        """Load model.json and vocab.json into the instance."""
+        # load vocab 
+        with open(self.vocab_path, "r", encoding="utf-8") as f:
+            self.vocab = set(json.load(f))
+
+        # load model 
+        with open(self.model_path, "r", encoding="utf-8") as f:
+            raw_model = json.load(f)
+
+        self.model = {}
+        for n_str, table in raw_model.items():
+            n = int(n_str)
+            self.model[n] = {}
+            for context_str, dist in table.items():
+                context = tuple(context_str.split()) if context_str else ()
+                self.model[n][context] = dist
+
     
     def main(self) :
         """Run the whole pipeline: build vocab and model, save them, and load them back into the instance."""
@@ -116,7 +174,7 @@ class NGramModel :
 
 def main() :
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env.test"))
+    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env"))
     print(os.getenv("VOCAB_PATH"))
     ngram_model = NGramModel(
         token_file=os.getenv("TRAIN_TOKENS"),

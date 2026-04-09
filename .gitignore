@@ -1,3 +1,7 @@
 *.json
 __pycache__/
 *.pyc
+data/
+data_test/
+.env
+.env.test

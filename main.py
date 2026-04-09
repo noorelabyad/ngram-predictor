@@ -107,11 +107,7 @@ def evaluate():
 
 def main():
     """Run the desired steps of the pipeline based on command line arguments."""
-
-    # Uses the test data (runs on smaller raw data sample) instead of the main config and data
-    # load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env.test"))
-
-    # Uses the full data
+    
     load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env"))
 
     parser = argparse.ArgumentParser(description="run upto which step")

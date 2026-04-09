@@ -2,6 +2,9 @@ import os
 import sys
 sys.path.append(os.getcwd())
 import re
+import nltk
+from nltk.tokenize import sent_tokenize
+
 
 class Normalizer:
 
@@ -32,23 +35,39 @@ class Normalizer:
         return text
 
     @staticmethod
-    def strip_gutenberg(text) :
-        """Extract only the lines in between the Gutenberg header and footer from the input string (parameter 'text') 
-        that may contain several concatenated Gutenberg texts, and return the cleaned string."""
-        
+    def strip_gutenberg(text):
+        """
+        Extract only the lines in between the Gutenberg header and footer
+        from the input string (parameter 'text') that may contain several
+        concatenated Gutenberg texts, and return the cleaned string.
+        """
         start = "*** START OF THE PROJECT GUTENBERG"
         end = "*** END OF THE PROJECT GUTENBERG"
-        if start not in text or end not in text:
-            return text
-        
-        pattern = (
-            re.escape(start) + r"[^\n]*\n" # start + till end of line
-            r"(.*?)" +
-            re.escape(end)
-        )
 
-        matches = re.findall(pattern, text, flags=re.DOTALL)
-        return "\n".join(m.strip() for m in matches)
+        has_start = start in text
+        has_end = end in text
+
+        # Case 1: neither exists
+        if not has_start and not has_end:
+            return text
+
+        # both exist (possibly multiple times)
+        if has_start and has_end:
+            pattern = (
+                        re.escape(start) + r"[^\n]*\n" # start + till end of line
+                        r"(.*?)" +
+                        re.escape(end)
+                    )
+            matches = re.findall(pattern, text, flags=re.DOTALL)
+            return "\n".join(m.strip() for m in matches)
+
+        # only START exists: remove everything before and including it
+        if has_start:
+            return re.split(re.escape(start), text, maxsplit=1)[1].lstrip()
+
+        # only END exists: remove everything after and including it
+        if has_end:
+            return re.split(re.escape(end), text, maxsplit=1)[0].rstrip()
 
 
     @staticmethod
@@ -58,13 +77,11 @@ class Normalizer:
     
     @staticmethod
     def remove_punctuation(text) :
-        """given a parameter input string (parameter 'text'); removes all punctuation as well as underscores
-         retaining fullstops and replacing all excalamations 
-         and question marks with fullstops to identify sentences and return the cleaned text"""
+        """given a parameter input string (parameter 'text'); removes all punctuation and return the cleaned text"""
 
         text = re.sub(r"’", "'", text)
-        text = re.sub(r"[^\w\s'.?!:]|_", " ", text)
-        return re.sub(r'[?!:]', '.', text)
+        text = re.sub(r"[^\w\s]|_", " ", text)
+        return text
 
     @staticmethod
     def remove_numbers(text) :
@@ -95,12 +112,23 @@ class Normalizer:
         return text
         
     @staticmethod
-    def sentence_tokenize(text) :
-        """for an input string (parameter 'text'), Split text into sentences using fullstops as delimiters, and
-        return a list of sentences."""
-        sentences = text.split(".")
-        return sentences
-    
+
+    def sentence_tokenize(text):
+        """
+        Sentence tokenize using NLTK.
+        Automatically downloads required resources if missing.
+        """
+        try:
+            nltk.data.find("tokenizers/punkt")
+            nltk.data.find("tokenizers/punkt_tab")
+        except LookupError:
+            nltk.download("punkt")
+            nltk.download("punkt_tab")
+
+        return sent_tokenize(text)
+
+
+
     @staticmethod
     def word_tokenize(sentence) :
         """for an input string (parameter 'sentence'), Split a single sentence into a list of tokens and return the list."""
@@ -108,34 +136,43 @@ class Normalizer:
         return tokens
     
 
-    def save(self, word_tokens) :
-        """Save the tokenized words (input parameter 'word_tokens') to the output_file attribute of the instance, 
-        one sentence per line, with tokens separated by spaces"""
+    def save(self, word_tokens):
+        """
+        Save the tokenized words (input parameter 'word_tokens') to the output_file
+        attribute of the instance, one sentence per line, with tokens separated by spaces.
+        Creates directories if they do not exist.
+        """
+        # Ensure output directory exists
+        output_dir = os.path.dirname(self.output_file)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+
         with open(self.output_file, "w", encoding="utf-8") as f:
             for tokens in word_tokens:
                 f.write(" ".join(tokens) + "\n")
 
 
-    def main(self) :
+    def main(self):
         """Run the whole pipeline: load raw text, clean and tokenize it, and save the processed tokens to a file."""
         text = self.load()
-        text = self.strip_gutenberg(text)
-        text = self.normalize(text)
-        sentences = self.sentence_tokenize(text)
-        word_tokens = [self.word_tokenize(sentence) for sentence in sentences]
+        text = Normalizer.strip_gutenberg(text)
+        sentences = Normalizer.sentence_tokenize(text)
+        sentences = [Normalizer.normalize(sentence) for sentence in sentences]
+        word_tokens = [Normalizer.word_tokenize(sentence) for sentence in sentences]
+
         self.save(word_tokens)
 
 
 def main() :
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env.test"))
+    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env"))
     normalizer1 = Normalizer(folder_path=os.getenv("TRAIN_RAW_DIR"), output_file=os.getenv("TRAIN_TOKENS"))
     
     # Training
     normalizer1.main()
 
     # Normalizer Test
-    print(Normalizer.normalize("  \"Hello, World\" This is a test, 123   "))
+    print(Normalizer.normalize("  \"Hello. Mr. World\" This is a test, 123   "))
 
 
 

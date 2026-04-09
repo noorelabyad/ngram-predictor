@@ -5,14 +5,14 @@ import os
 class Evaluator:
     """
     Computes cross-entropy and perplexity on a held-out evaluation corpus.
-    Assumes evaluation text has already been normalized and saved to EVAL_TOKENS.
+    Assumes evaluation text has already been normalized and tokenized.
     """
 
     def __init__(self, model, normalizer, eval_file):
         """
         model: pre-loaded NGramModel
         normalizer: Normalizer instance (kept for symmetry)
-        eval_file: path to tokenized evaluation corpus (EVAL_TOKENS)
+        eval_file: path to tokenized evaluation corpus
         """
         self.model = model
         self.normalizer = normalizer
@@ -24,10 +24,14 @@ class Evaluator:
         context_tokens: list of previous tokens
         Returns None if word has zero probability.
         """
+        # map OOV word
+        if word not in self.model.vocab:
+            word = "<UNK>"
+
+        # build context string (lookup handles backoff internally)
         context = " ".join(context_tokens)
 
-        probs = self.model.lookup(context)   # returns {word: prob}
-        # print(f"DEBUG: Context='{context}' | Word='{word}' | Probs={probs}")  # Debug log 
+        probs = self.model.lookup(context)  # {word: probability}
 
         if word not in probs or probs[word] <= 0.0:
             return None
@@ -36,7 +40,7 @@ class Evaluator:
 
     def _load_eval_tokens(self):
         """
-        Load tokenized evaluation sentences from EVAL_TOKENS.
+        Load tokenized evaluation sentences.
         Returns a flat list of tokens.
         """
         if not os.path.isfile(self.eval_file):
@@ -82,7 +86,7 @@ class Evaluator:
         if evaluated == 0:
             raise ValueError("No words evaluated; perplexity undefined.")
 
-        cross_entropy = - total_log_prob / evaluated
+        cross_entropy = -total_log_prob / evaluated
         perplexity = 2 ** cross_entropy
 
         skip_ratio = skipped / (evaluated + skipped)

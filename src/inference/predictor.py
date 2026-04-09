@@ -14,30 +14,51 @@ class Predictor:
         self.normalizer = normalizer
         self.top_k = top_k
 
-    def normalize(self, text) :
-        """Normalize the input text using the same normalization steps as in training
-        Parameter 'text' is the raw user input string. 
-        Returns the normalized context string that will be used for prediction"""
-        text = Normalizer.normalize(text).split()
-        return " ".join(text[-(self.ngram_model.ngram_order - 1) :])
+    def normalize(self, text):
+        """
+        Normalize the input text using the same normalization steps as in training.
+        Returns the normalized context string used for prediction.
+        """
+        # Normalizer.normalize returns a string
+        tokens = Normalizer.normalize(text).split()
 
-    def map_oov(self,context) :
-        """Map any out-of-vocab word in the input string parameter 'context' to <UNK> and returns the mapped string."""
-        return " ".join([word if word in self.ngram_model.vocab else "<UNK>" for word in context.split()])
+        # keep last (n-1) tokens for context
+        context_len = self.ngram_model.ngram_order - 1
+        return " ".join(tokens[-context_len:])
+
+    def map_oov(self, context):
+        """
+        Map any out-of-vocab word in the input string parameter 'context'
+        to <UNK> and return the mapped string.
+        """
+        return " ".join(
+            word if word in self.ngram_model.vocab else "<UNK>"
+            for word in context.split()
+        )
     
-    def predict_next(self, text) :
-        """Given an input string parameter 'text', returns a list of the top-k most likely next words based on the n-gram model."""
+    def predict_next(self, text):
+        """
+        Given an input string parameter 'text', return a list of the top-k
+        most likely next words based on the n-gram model.
+        """
         context = self.normalize(text)
         context = self.map_oov(context)
+
+        # lookup returns {word: probability}
         next_words = self.ngram_model.lookup(context)
-        likeliest_next_words = dict(sorted(next_words.items(), key=lambda item: item[1]))
-        return list(likeliest_next_words.keys())[-self.top_k :][::-1]
+
+        # sort by probability descending
+        sorted_words = sorted(
+            next_words.items(), key=lambda item: item[1], reverse=True
+        )
+
+        return [word for word, _ in sorted_words[:self.top_k]]
     
     
 def main() :
 
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env.test"))
+    load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env"))
 
     normalizer=Normalizer(
         folder_path=os.getenv("TRAIN_RAW_DIR"), 

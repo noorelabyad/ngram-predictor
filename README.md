@@ -37,12 +37,6 @@ This project provides a command-line interface to run different stages of the la
 
 All configuration (paths, model parameters, and hyperparameters) is loaded from environment variables defined in `config\.env`.
 
- #### There are two options for running the code :
-  1. Loading the `config\.env.test` and running on the smaller test data (faster for testing and debugging) or 
-  2. Loading the `config\.env` and running on the full data (takes much more time).
-- You can switch between the two by commenting/uncommenting the corresponding `load_dotenv()` lines in the
-main() function in `main.py`.
----
 
 ### Running the Program (CLI)
 
@@ -138,16 +132,7 @@ This will:
 
 ngram-predictor/
 - config/
-  - .env (points to 'data/' for complete training data)
-  - .env.test (points to 'data_test/' for a small subset of the training data for testing)
-- data_test/ 
-  - raw/
-    - train/
-  - processed/
-    - train_tokens.txt
-  - model/
-    - model.json
-    - vocab.json
+  - .env 
 - data/
   - raw/
     - train/
@@ -167,6 +152,8 @@ ngram-predictor/
     - predictor.py
   - ui/
     - app.py
+  - evaluation/
+    - evaluator.py
 - main.py
 - .gitignore
 - requirements.txt
