@@ -6,19 +6,16 @@ from src.model.ngram_model import NGramModel
 from src.inference.predictor import Predictor
 from src.evaluation.evaluator import Evaluator
 
-""" There are two modes to run the code:
-loading the config.env.test and running on the smaller test data (faster for testing and debugging)
-or loading the config.env and running on the full data (takes more time but gives better results).
-You can switch between the two by commenting/uncommenting the corresponding load_dotenv lines in the
-main() function at the bottom of this file.
-"""
-"""This module is the main entry point to run the whole pipeline. 
-It contains functions to run each step of the pipeline separately (data preparation, model training, and inference), 
-as well as a function to run the whole pipeline end-to-end. 
-The main() function uses command line arguments to determine which steps to run.
+""" 
+This module is the main entry point for running the entire pipeline.
 
-THE DEFAULT STEP IS INFERENCE; SO THAT THE ALREADY TRAINED MODEL CAN BE LOADED AND TESTED WITHOUT HAVING 
-TO RE-RUN THE DATA PREP AND MODEL TRAINING STEPS WHICH TAKES A LONG TIME ON THE FULL DATA.
+It provides functions to execute each stage independently—data preparation,
+model training, and inference—as well as a function to run the full pipeline
+end-to-end.
+
+The `main()` function uses command-line arguments to determine which steps
+to execute.
+
 """
 
 def dataprep() :
@@ -107,7 +104,7 @@ def evaluate():
 
 def main():
     """Run the desired steps of the pipeline based on command line arguments."""
-    
+
     load_dotenv(dotenv_path=os.path.join(os.getcwd(), "config/.env"))
 
     parser = argparse.ArgumentParser(description="run upto which step")
