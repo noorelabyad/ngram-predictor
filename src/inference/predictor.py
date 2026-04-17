@@ -68,8 +68,8 @@ def main() :
 
     ngram_model=NGramModel(
         token_file=os.getenv("TRAIN_TOKENS"),
-        model_path=os.getenv("MODEL_PATH"),
-        vocab_path=os.getenv("VOCAB_PATH"),
+        model_path=os.getenv("MODEL"),
+        vocab_path=os.getenv("VOCAB"),
         unk_threshold=int(os.getenv("UNK_THRESHOLD")),
         ngram_order=int(os.getenv("NGRAM_ORDER"))
         )
